@@ -5,7 +5,61 @@ const char *ts = "/home/mjkim/playground/hls/Mirae_435MHz.ts";
 
 int adaptation_field_parser(uint8_t *buf)
 {
-    uint8_t length;
+    int i;
+    uint8_t offset = 0;
+
+    uint8_t length = buf[offset];
+    offset += 1;
+
+    uint8_t discontinuity_indicator                 = (buf[offset] & 0x80) >> 7;
+    uint8_t random_access_indicator                 = (buf[offset] & 0x40) >> 6;
+    uint8_t elementary_stream_priority_indicator    = (buf[offset] & 0x20) >> 5;
+    uint8_t pcr_flag                                = (buf[offset] & 0x10) >> 4;
+    uint8_t opcr_flag                               = (buf[offset] & 0x08) >> 3;
+    uint8_t splicing_point_flag                     = (buf[offset] & 0x04) >> 2;
+    uint8_t transport_private_data_flag             = (buf[offset] & 0x02) >> 1;
+    uint8_t adaptation_field_extension_flag         = (buf[offset] & 0x01);
+    offset += 1;
+
+    if (pcr_flag == 1) {
+        uint8_t program_clock_reference_base[6];
+        for (i = 0; i < 6; i++) {
+            program_clock_reference_base[i] = buf[offset + i];
+        }
+        offset += 6;
+    }
+
+    if (opcr_flag == 1) {
+        uint8_t original_program_clock_reference_base[6];
+        for (i = 0; i < 6; i++) {
+            original_program_clock_reference_base[i] = buf[offset + i];
+        }
+        offset += 6;
+    }
+
+    if (splicing_point_flag == 1){
+        uint8_t splice_countdown = buf[offset];
+        offset += 1;
+    }
+
+    if (transport_private_data_flag == 1) {
+        uint8_t transport_private_data_length = buf[offset];
+        offset +=1;
+
+        for (i = 0; i < transport_private_data_length; i++) {
+            uint8_t private_data_byte = buf[offset + i];
+        }
+
+        offset += transport_private_data_length;
+    }
+
+    if (adaptation_field_extension_flag == 1) {
+        uint8_t adaptation_field_extension_length = buf[offset];
+        offset += 1;
+        uint8_t ltw_flag                = buf[offset] & 0x80 >> 7;
+        uint8_t piecewise_rate_flag     = buf[offset] & 0x40 >> 6;
+        uint8_t seamless_splice_flag    = buf[offset] & 0x20 >> 5;
+    }
 }
 
 
